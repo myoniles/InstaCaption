@@ -1,0 +1,2 @@
+model_checkpoint_path: "/home/mike/Documents/LaunchPad/AvRNN/avRNN.tfl"
+all_model_checkpoint_paths: "/home/mike/Documents/LaunchPad/AvRNN/avRNN.tfl"
