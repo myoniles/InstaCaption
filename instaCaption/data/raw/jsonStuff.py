@@ -1,6 +1,6 @@
 import json
 import os
-import re
+from gensim.models import Word2Vec
 
 def make_image_pairs(dirname):
     posts = []
@@ -20,22 +20,28 @@ def make_image_pairs(dirname):
 def make_nonVec_data_set(textFile):
     user_list = open(textFile)
     w =[make_image_pairs(x[:-1]) for x in user_list]
-    '''
-    for line in user_list:
-        w = w + make_image_pairs(line[:-1])
-    '''
-    return w
+    
+    sent = []
+    for user in w:
+        for comment in user:
+            sent.append(comment)
+    
+    return sent
 
-heck =make_nonVec_data_set('users.txt')
-#print(heck)
+image_pairs =make_nonVec_data_set('users.txt')
+
+
+def getSentences(nonVec_dataset):
+    sentences = [ [i[1]] for i in nonVec_dataset]
+    return sentences
 
 def getVocab(nonVec_dataset):
     raw = ""
 
-    for j in nonVec_dataset:
-        for i in j:
-            raw +=" " +  i[1]
-    print(raw)
+    for i in nonVec_dataset:
+        raw +=" " +  i[1]
+    
+
 
     raw = raw.replace(".", "")
     raw = raw.replace("!", "")
@@ -48,10 +54,24 @@ def getVocab(nonVec_dataset):
     vocab = set(raw.split())
     return vocab
 
-pr=getVocab(heck)
+vocab=getVocab(image_pairs)
 
-for i in pr:
-    print(i)
-print(len(pr))
+
+def createModel(sentences):
+    worded = [ i[0].split() for i in sentences ]
+    model = Word2Vec(worded, min_count=1)
+    model.save('model.bin')
+    model.save('../model.bin')
+
+    return model
+
+
+sentences = getSentences(image_pairs)
+model = createModel(sentences)
+
+
+#for i in pr:
+#    print(i)
+#print(len(pr))
 #print("Manchester" in pr )
 #print( "hope" in pr)
