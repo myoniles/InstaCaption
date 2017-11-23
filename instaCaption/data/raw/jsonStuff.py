@@ -1,6 +1,9 @@
 import json
 import os
 from gensim.models import Word2Vec
+import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
+
 
 def make_image_pairs(dirname):
     posts = []
@@ -17,6 +20,27 @@ def make_image_pairs(dirname):
                 posts.append(image)
     return posts
 
+
+def import_images(textFile):
+    image = []
+    users = open(textFile)
+
+    for user in users:
+        if os.path.isdir(user[:-1]):
+            with open(user[:-1] + '/'+ user[:-1]+'.json') as data_file:
+                data = json.load(data_file)
+
+            for x in range(1, len(data)):
+                #image.append((data[x]["thumbnail_src"]).rsplit('/', 1)[-1])
+                if (data[x]['edge_media_to_caption']['edges']):
+                    image.append(user[:-1] +'/' + (data[x]["thumbnail_src"]).rsplit('/', 1)[-1])
+    image = [ x for x in image if(os.path.isfile(x))]
+    image = [ mpimg.imread(dirName) for dirName in image[1:] ]
+    return image
+
+
+#print(import_images('users.txt'))
+
 def make_nonVec_data_set(textFile):
     user_list = open(textFile)
     w =[make_image_pairs(x[:-1]) for x in user_list]
@@ -25,7 +49,7 @@ def make_nonVec_data_set(textFile):
     for user in w:
         for comment in user:
             sent.append(comment)
-    
+    user_list.close()
     return sent
 
 image_pairs =make_nonVec_data_set('users.txt')
@@ -60,14 +84,16 @@ vocab=getVocab(image_pairs)
 def createModel(sentences):
     worded = [ i[0].split() for i in sentences ]
     model = Word2Vec(worded, min_count=1)
-    model.save('model.bin')
-    model.save('../model.bin')
+    #model.save('model.bin')
+    #model.save('../model.bin')
 
     return model
 
 
 sentences = getSentences(image_pairs)
 model = createModel(sentences)
+
+
 
 
 #for i in pr:
