@@ -3,7 +3,7 @@ import os
 from gensim.models import Word2Vec
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
-
+from PIL import Image
 
 def make_image_pairs(dirname):
     posts = []
@@ -21,7 +21,34 @@ def make_image_pairs(dirname):
     return posts
 
 
-def import_images(textFile):
+def import_images(textFile, mod = False):
+    image = []
+    users = open(textFile)
+
+    if ( not mod ):
+        for user in users:
+            if os.path.isdir(user[:-1]):
+                with open(user[:-1] + '/'+ user[:-1]+'.json') as data_file:
+                    data = json.load(data_file)
+
+                for x in range(1, len(data)):
+                    #image.append((data[x]["thumbnail_src"]).rsplit('/', 1)[-1])
+                    if (data[x]['edge_media_to_caption']['edges']):
+                        image.append(user[:-1] +'/' + (data[x]["thumbnail_src"]).rsplit('/', 1)[-1])
+        image = [ x for x in image if(os.path.isfile(x))]
+        image = [ mpimg.imread(dirName) for dirName in image[1:] ]
+    else:
+        image = [ mpimg.imread("../resized/"+ filename) for filename in os.listdir("../resized/")]
+    return image
+
+
+X = import_images('users.txt', mod = True)
+print(X)
+plt.imshow(X[1])
+plt.show()
+
+
+def save_mod_images(textFile):
     image = []
     users = open(textFile)
 
@@ -31,15 +58,18 @@ def import_images(textFile):
                 data = json.load(data_file)
 
             for x in range(1, len(data)):
-                #image.append((data[x]["thumbnail_src"]).rsplit('/', 1)[-1])
                 if (data[x]['edge_media_to_caption']['edges']):
                     image.append(user[:-1] +'/' + (data[x]["thumbnail_src"]).rsplit('/', 1)[-1])
     image = [ x for x in image if(os.path.isfile(x))]
-    image = [ mpimg.imread(dirName) for dirName in image[1:] ]
+    for dirImg in image:
+        img = Image.open(dirImg)
+        img.thumbnail((600,600), Image.ANTIALIAS)
+        img.save("../resized/"+(dirImg).rsplit('/',1)[-1], "JPEG")
+        img.close()
     return image
+#save_mod_images('users.txt')
 
 
-#print(import_images('users.txt'))
 
 def make_nonVec_data_set(textFile):
     user_list = open(textFile)

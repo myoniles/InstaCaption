@@ -32,5 +32,5 @@ def load_im(filename,w=640, h=640):
     img = mpimg.imread(filename)
     return img
 
-plt.imshow(load_im('nom.jpg'))
+plt.imshow(load_im('test.jpg'))
 plt.show()
