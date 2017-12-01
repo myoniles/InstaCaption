@@ -17,7 +17,8 @@ def make_image_pairs(dirname):
             if (data[x]['edge_media_to_caption']['edges']):
                 image.append((data[x]["thumbnail_src"]).rsplit('/', 1)[-1])
                 image.append(data[x]['edge_media_to_caption']['edges'][0]['node']['text'])
-                posts.append(image)
+                if(os.path.isfile(dirname + '/' + image[0])):
+                    posts.append(image)
     return posts
 
 
@@ -42,10 +43,14 @@ def import_images(textFile, mod = False):
     return image
 
 
-X = import_images('users.txt', mod = True)
-print(X)
-plt.imshow(X[1])
-plt.show()
+#X = import_images('users.txt', mod = True)
+#print(X)
+#plt.imshow(X[1])
+#plt.show()
+
+
+
+
 
 
 def save_mod_images(textFile):
@@ -63,7 +68,7 @@ def save_mod_images(textFile):
     image = [ x for x in image if(os.path.isfile(x))]
     for dirImg in image:
         img = Image.open(dirImg)
-        img.thumbnail((600,600), Image.ANTIALIAS)
+        img.thumbnail((300,300), Image.ANTIALIAS)
         img.save("../resized/"+(dirImg).rsplit('/',1)[-1], "JPEG")
         img.close()
     return image
@@ -83,6 +88,8 @@ def make_nonVec_data_set(textFile):
     return sent
 
 image_pairs =make_nonVec_data_set('users.txt')
+
+
 
 
 def getSentences(nonVec_dataset):
@@ -112,18 +119,61 @@ vocab=getVocab(image_pairs)
 
 
 def createModel(sentences):
-    worded = [ i[0].split() for i in sentences ]
+    worded = [( i[0]).split() for i in sentences ]
     model = Word2Vec(worded, min_count=1)
     #model.save('model.bin')
     #model.save('../model.bin')
 
     return model
 
-
 sentences = getSentences(image_pairs)
 model = createModel(sentences)
 
 
+def sent2listofVec(sentence):
+    sentence = sentence.split()
+    vecList = [model[i] for i in sentence]
+    return vecList
+
+
+def getVec_set(image_pairs):
+    VecSet = [[ mpimg.imread("../resized/"+ im[0]), sent2listofVec(im[1])] for im in image_pairs if os.path.isfile("../resized/"+im[0])]
+    return VecSet
+
+def listofVec2sent(listofVec):
+    sent = [model.wv.most_similar(positive=[word])[0][0] for word in listofVec]
+    sent= " ".join(sent)
+    return sent
+
+Ximproved = getVec_set(image_pairs)
+#print(Ximproved)
+
+#print(listofVec2sent(Ximproved[0][1]))
+#plt.imshow(Ximproved[0][0])
+#plt.show()
+
+def make_bag_of_words(vocab, sentences):
+    BOW_sent = []
+    for sent in sentences:
+        temp = (sent[0]).split()
+        sentVec = [int((word) in temp) for word in vocab]
+        #sentVec = [1 for word in vocab if (word in sent)]
+        
+        BOW_sent.append(sentVec)
+    return BOW_sent
+
+BOW = make_bag_of_words(vocab, sentences)
+#testBOW = make_bag_of_words(['I', 'like', 'foo', 'food', 'bar'], [["I like foo foo"], ['I like food'],  ["I like bar"]])
+ 
+
+def BOW2Sent(BOW_vec, vocab):
+    sent =""
+    vocab = list(vocab)
+    for x in range(len(vocab)):
+        if( BOW_vec[x] == 1 ):
+            sent += " " + vocab[x]
+    return sent
+#print(BOW2Sent(testBOW[1], ['I', 'like', 'foo', 'food', 'bar'], [["I like foo foo"], ["I like food"], [ "I like bar"]]))
 
 
 #for i in pr:
