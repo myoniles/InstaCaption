@@ -1,4 +1,4 @@
-print("Importing... ALL THE PACKAGES", end = " ")
+print("[ ]  Importing... ALL THE PACKAGES\r", end = "")
 import numpy as np
 import torch
 import os
@@ -16,79 +16,115 @@ import matplotlib.pyplot as plt
 
 
 
-print("done")
+print("[✔️]")
 
 cudnn.benchmark = True
 
 
 #Define pretrained Resnet Model
-print("importing RESNET...", end=" ")
-CNNmodel = models.resnet152(pretrained=True)
+print("[ ]  Importing RESNET...\r", end="")
+CNNmodel = models.resnet152(pretrained=True).cuda()
 CNNmodel = torch.nn.DataParallel(CNNmodel).cuda()
-print("done")
+print("[✔️]")
 
 
-print("normalizing data...", end =" ")
+
+
+
+
+
+
+print("[ ] normalizing data...\r", end ="")
 normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-image_data = datasets.ImageFolder("../resized",transforms.Compose([transforms.RandomSizedCrop(224), transforms.RandomHorizontalFlip(), transforms.ToTensor(), normalize]))
-print("hihowareya?")
+image_data = [i[0] for i in jsonStuff.Ximproved]
+Y = [i[1] for i in jsonStuff.Ximproved]
+        
+
+#plt.imshow(image_data[0])
+#plt.show()
+toTens = transforms.ToTensor()
+toPIL = transforms.ToPILImage()
 
 
-img_loader=torch.utils.data.DataLoader(image_data)
+
+
+image_data = [ toTens(i) for i in image_data ]
+normalize(image_data)
+image_data = [i.unsqueeze(0) for i in image_data]
+
+
+
+#plt.imshow(toPIL(image_data[557]))
+#plt.show() # """"""""""""" NORMALIZED """""""""""""""
+
+print("[✔️]  hihowareya?      ")
+
+
+
+
 
 class LSTMcaption(nn.Module):
-    def __init__(self,CCNoutput_dim,  embedding_dim, hidden_dim, W2VModel):
+    def __init__(self, CCNoutput_dim,  embedding_dim, hidden_dim):
         super(LSTMcaption, self).__init__()
         self.hidden_dim = hidden_dim
+        self.CNNdim = CCNoutput_dim
+        self.lstm = nn.LSTM(self.CNNdim, self.hidden_dim).cuda()
 
-        self.embed = nn.Embedding(vocab_size, embedding_dim)
-
-        self.lstm(CNNoutput_dim, embedding_dim)
-
+        self.lstm.cuda()
         self.hidden = self.init_hidden()
 
     def init_hidden(self):
         return((Variable(torch.rand(1,1,100)), Variable(torch.randn((1,1,100)))))
     def forward(self, imageVec):
+        print(self.hidden)
+        print(imageVec)
         outWord, self.hidden = self.lstm(imageVec, self.hidden)
         return outWord
 
-print("Creating LSTM...", end=" ")
-lstm = nn.LSTM(1000,100)
-lstm.cuda()
-print("done")
+print("[ ]  Creating LSTM...\r", end="")
+lstm = LSTMcaption(1000,100, 100)
+
+print("[✔️]")
 hidden = (Variable(torch.rand(1,1,100)), Variable(torch.randn((1,1,100))))
 
-loss_fun = nn.NLLLoss()
+loss_fun = nn.L1Loss()
 optimizer = optim.SGD(lstm.parameters(), lr =0.1)
 
 
 
+inputVar = Variable(image_data[0])
+print(CNNmodel(inputVar))
 
 
 
-for i, (input, target) in enumerate(img_loader):
-    input_var = Variable(input)
 
-    print(input_var)
-
-    
-
-
-    imgplot = plt.imshow(input_var.data.numpy())
-    plt.show()
-
-    break
-
-    '''
+for i in range(len(jsonStuff.Ximproved)):
+    input_var = Variable(image_data[i])
     CNN_out = CNNmodel(input_var)
-
-    
-
+    CNN_out = CNN_out.unsqueeze(0)
+    CNN_out.cpu()
+    print("CNN", CNN_out)
     lstm.zero_grad()
 
-    lstm.hidden = model.init_hidden()
+    lstm.hidden = (Variable(torch.rand(1,1,100).cuda()), Variable(torch.randn((1,1,100)).cuda())) 
 
-    target 
-'''
+    print(CNN_out)
+    for word in Y[i]:
+        temp= torch.from_numpy(word)
+        target=Variable(temp, requires_grad=False)
+        out = lstm(CNN_out)
+
+        
+        #print(out[0])
+        out = out[0]
+        
+        
+
+        
+
+        loss = loss_fun(out, target.cpu())
+        loss.backward()
+        optimizer.step()
+
+
 

@@ -100,22 +100,26 @@ print(CNNmodel(inputVar))
 for i in range(len(jsonStuff.Ximproved)):
     input_var = Variable(image_data[i])
     CNN_out = CNNmodel(input_var)
-
+    CNN_out = CNN_out.unsqueeze(0)
     lstm.zero_grad()
 
     lstm.hidden = (Variable(torch.rand(1,1,100)), Variable(torch.randn((1,1,1000)))) 
 
+    print(CNN_out)
     for word in Y[i]:
         temp= torch.from_numpy(word)
-        target=Variable(temp)
-        out = lstm(CNN_out.unsqueeze(0))
-
-
-        target=target.unsqueeze(0)
-        target=target.unsqueeze(0)
+        target=Variable(temp, requires_grad=False)
+        out = lstm(CNN_out, lstm.hidden)
 
         
-        loss = loss_fun(input, target)
+        #print(out[0])
+        out = out[0]
+        
+        
+
+        target.cpu() 
+
+        loss = loss_fun(out, target.cpu())
         loss.backward()
         optimizer.step()
 
