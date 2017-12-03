@@ -16,7 +16,7 @@ def make_image_pairs(dirname):
             #image.append((data[x]["thumbnail_src"]).rsplit('/', 1)[-1])
             if (data[x]['edge_media_to_caption']['edges']):
                 image.append((data[x]["thumbnail_src"]).rsplit('/', 1)[-1])
-                image.append(data[x]['edge_media_to_caption']['edges'][0]['node']['text'])
+                image.append(data[x]['edge_media_to_caption']['edges'][0]['node']['text'] + " endSent")
                 if(os.path.isfile(dirname + '/' + image[0])):
                     posts.append(image)
     return posts
@@ -68,7 +68,13 @@ def save_mod_images(textFile):
     image = [ x for x in image if(os.path.isfile(x))]
     for dirImg in image:
         img = Image.open(dirImg)
-        img.thumbnail((300,300), Image.ANTIALIAS)
+        length , height = img.size
+        if(length > height):
+            img.thumbnail((400,height), Image.ANTIALIAS)
+        elif(height > length):
+            img.thumbnail((400,400), Image.ANTIALIAS)
+        else:
+            img.thumbnail((300,300), Image.ANTIALIAS)
         img.save("../resized/"+(dirImg).rsplit('/',1)[-1], "JPEG")
         img.close()
     return image
@@ -120,7 +126,7 @@ vocab=getVocab(image_pairs)
 
 def createModel(sentences):
     worded = [( i[0]).split() for i in sentences ]
-    model = Word2Vec(worded, min_count=1)
+    model = Word2Vec(worded, min_count=1, hs=1)
     #model.save('model.bin')
     #model.save('../model.bin')
 

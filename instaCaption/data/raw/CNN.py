@@ -57,7 +57,7 @@ toPIL = transforms.ToPILImage()
 #   unsqueeze is used to add an additional layer
 ####################################################################################################
 image_data = [ toTens(i) for i in image_data ]
-image_data = [normalize(i) for i in image_data]
+image_data = [normalize(i) for i in image_data ]
 
 plt.imshow(toPIL(image_data[557]))
 plt.show() # """"""""""""" NORMALIZED """""""""""""""
@@ -82,86 +82,23 @@ print("[✔️]  hihowareya?      ")
 ####################################################################################################
 
 
-class LSTMcaption(nn.Module):
-    def __init__(self, CCNoutput_dim,  embedding_dim, hidden_dim):
-        super(LSTMcaption, self).__init__()
-        self.hidden_dim = hidden_dim
-        self.CNNdim = CCNoutput_dim
-        self.lstm = nn.LSTM(self.CNNdim, self.hidden_dim).cuda()
 
-        self.lstm.cuda()
-        self.hidden = self.init_hidden()
-        #self.long_2_word = nn.Linear(hidden_dim, embedding_dim)
-        
-        
-    def init_hidden(self):
-        return(Variable(torch.rand(1,1,100)).cuda(), Variable(torch.randn((1,1,100))).cuda())
-    def forward(self, imageVec):
-        outLong, self.hidden = self.lstm(imageVec, self.hidden)
-        #Outword = self.long_2_word(outLong, -1)
-        return outLong
-
-print("[ ]  Creating LSTM...\r", end="")
-lstm = LSTMcaption(1000,100, 100)
-
-print("[✔️]")
-
-
-
-
-loss_fun = nn.BCELoss()
-optimizer = optim.SGD(lstm.parameters(), lr =0.1)
-sig = nn.Sigmoid()
 
 
 inputVar = Variable(image_data[0])
 #print('CNN', CNNmodel(inputVar))
 
 
-
+errors = []
 
 for i in range(len(jsonStuff.Ximproved)):
     input_var = Variable(image_data[i].unsqueeze(0))
-    #plt.imshow(toPIL(image_data[i]))
+    plt.imshow(toPIL(image_data[i]))
     #plt.show()
 
-
-    CNN_out = CNNmodel(input_var)
+    try:
+        CNN_out = CNNmodel(input_var)
+    except:
+        print('error at', i)
+        errors.append(i)
     #print(CNN_out)
-    CNN_out = CNN_out.unsqueeze(0)
-
-    lstm.zero_grad()
-
-    lstm.hidden = lstm.init_hidden() 
-    
-    for word in Y[i]:
-        heck = 0
-        temp= torch.from_numpy(word)
-        #print('short temp', temp)
-        #temp = temp.type(torch.LongTensor)
-        temp = temp.cuda()
-
-        #print('temp', temp)
-
-        target=Variable(temp, requires_grad=False)
-        out = lstm(CNN_out)
-        target.type(torch.LongTensor)
-        
-        #print(out[0])
-        
-        
-        
-
-        
-
-        loss = loss_fun(sig(out[0][0]), target)
-
-        print("loss", loss.data[0], "image number:", i,  "\r", end="")  
-
-        if( heck == 0):
-            loss.backward(retain_graph=True)
-        else:
-            loss.backward()
-        heck += 1
-        optimizer.step()
-torch.save(lstm, '../LSTM.pt')
