@@ -13,6 +13,7 @@ import torch.optim as optim
 import jsonStuff
 import matplotlib.image as mpimg
 import matplotlib.pyplot as plt
+from LSTMclass import LSTMcaption
 print("[✔️]")
 
 cudnn.benchmark = True
@@ -25,7 +26,6 @@ CNNmodel = torch.nn.DataParallel(CNNmodel).cuda()
 print("[✔️]")
 
 
-print(CNNmodel)
 ####################################################################################################
 #   The CNN Model takes an image ( normalized below ) and returns 
 #   a 1 x 1000 float tensor
@@ -59,8 +59,8 @@ toPIL = transforms.ToPILImage()
 image_data = [ toTens(i) for i in image_data ]
 image_data = [normalize(i) for i in image_data]
 
-plt.imshow(toPIL(image_data[557]))
-plt.show() # """"""""""""" NORMALIZED """""""""""""""
+#plt.imshow(toPIL(image_data[557]))
+#plt.show() # """"""""""""" NORMALIZED """""""""""""""
 
 
 
@@ -81,7 +81,7 @@ print("[✔️]  hihowareya?      ")
 #       moves things to GPU
 ####################################################################################################
 
-
+"""
 class LSTMcaption(nn.Module):
     def __init__(self, CCNoutput_dim,  embedding_dim, hidden_dim):
         super(LSTMcaption, self).__init__()
@@ -100,7 +100,7 @@ class LSTMcaption(nn.Module):
         outLong, self.hidden = self.lstm(imageVec, self.hidden)
         #Outword = self.long_2_word(outLong, -1)
         return outLong
-
+"""
 print("[ ]  Creating LSTM...\r", end="")
 lstm = LSTMcaption(1000,100, 100)
 
@@ -109,9 +109,9 @@ print("[✔️]")
 
 
 
-loss_fun = nn.BCELoss()
+loss_fun = nn.L1Loss()
 optimizer = optim.SGD(lstm.parameters(), lr =0.1)
-sig = nn.Sigmoid()
+tanh = nn.Hardtanh()
 
 
 inputVar = Variable(image_data[0])
@@ -119,6 +119,8 @@ inputVar = Variable(image_data[0])
 
 
 
+totalLoss = 0
+iteration = 1
 
 for i in range(len(jsonStuff.Ximproved)):
     input_var = Variable(image_data[i].unsqueeze(0))
@@ -145,7 +147,6 @@ for i in range(len(jsonStuff.Ximproved)):
 
         target=Variable(temp, requires_grad=False)
         out = lstm(CNN_out)
-        target.type(torch.LongTensor)
         
         #print(out[0])
         
@@ -154,14 +155,17 @@ for i in range(len(jsonStuff.Ximproved)):
 
         
 
-        loss = loss_fun(sig(out[0][0]), target)
+        loss = loss_fun(tanh(out[0][0]), target)
+        lossp = loss.data[0]
+        totalLoss += lossp
 
-        print("loss", loss.data[0], "image number:", i,  "\r", end="")  
+        print("loss %.2f avg loss %.2f image number: %d \r"  % (lossp, (totalLoss/iteration), i), end = "")  
 
         if( heck == 0):
             loss.backward(retain_graph=True)
         else:
             loss.backward()
         heck += 1
+        iteration +=1
         optimizer.step()
 torch.save(lstm, '../LSTM.pt')
