@@ -39,7 +39,7 @@ for i in range ( 250000 ):
 
     #for documentation purposes
     if ( i % 2000 == 0 ):
-        print ("Error:", str(np.mean(np.abs(loss))))
+        print ("Error:", str(np.mean(np.abs(loss))), "\r", end ="")
 
     #find deltas
     dW_h2o = loss * dsigmoid(sqo)

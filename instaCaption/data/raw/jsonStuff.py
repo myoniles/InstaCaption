@@ -16,7 +16,7 @@ def make_image_pairs(dirname):
             #image.append((data[x]["thumbnail_src"]).rsplit('/', 1)[-1])
             if (data[x]['edge_media_to_caption']['edges']):
                 image.append((data[x]["thumbnail_src"]).rsplit('/', 1)[-1])
-                image.append(data[x]['edge_media_to_caption']['edges'][0]['node']['text'] + " endSent")
+                image.append("bSent "+ data[x]['edge_media_to_caption']['edges'][0]['node']['text'] + " endSent")
                 if(os.path.isfile(dirname + '/' + image[0])):
                     posts.append(image)
     return posts
