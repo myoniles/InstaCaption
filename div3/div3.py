@@ -24,7 +24,7 @@ W_h2o = 2* np.random.random((4,1)) -1
 learning_rate = 0.01
 
 
-for i in range ( 250000 ):
+for i in range ( 150000 ):
     # This is what trains the nueral net and updates the weights
     inputV = X
     # forward pass
@@ -49,6 +49,7 @@ for i in range ( 250000 ):
     #Update the weights
     W_i2h += inputV.T.dot(dW_i2h) * learning_rate
     W_h2o += sqh.T.dot(dW_h2o) * learning_rate
+print("\n")
 
 def predict(int_G):
     #This just does a forward pass and returns the squashed value of the output layer
@@ -64,7 +65,7 @@ def predict(int_G):
 
 testing = True
 while(testing):
-    testInput = input("Enter a number")
+    testInput = input("Enter a number ")
     testInput = int(testInput)
     if(testInput >= 0 and testInput < 256 ):
         if(predict(testInput) >= 0.5):
