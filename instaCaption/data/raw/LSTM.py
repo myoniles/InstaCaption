@@ -139,7 +139,7 @@ for j in range(epochs):
             #print(lstm.hidden) 
 
             target=Variable(temp)
-            out = model(CNN_out)
+            out = model(CNN_out, temp)
         
         
 
@@ -157,7 +157,7 @@ for j in range(epochs):
             heck += 1
             iteration +=1
             optimizer.step()
-    torch.save(lstm, '../LSTM2.pt')
+    torch.save(model, '../LSTM2.pt')
 
 
 
