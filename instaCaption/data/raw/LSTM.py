@@ -71,27 +71,8 @@ print("[✔️]  hihowareya?        ")
 #       hidden returns a clear initialized hidden layer
 #       redefines foward pass
 #       moves things to GPU
+#   Look at the LSTMclass.py file for more information
 ####################################################################################################
-
-
-#class LSTMcaption(nn.Module):
-#    def __init__(self, CCNoutput_dim,  embedding_dim, hidden_dim):
-#        super(LSTMcaption, self).__init__()
-#        self.hidden_dim = hidden_dim
-#        self.CNNdim = CCNoutput_dim
-#        self.lstm = nn.LSTM(self.CNNdim, self.hidden_dim).cuda()
-#
-#        self.lstm.cuda()
-#        self.hidden = self.init_hidden()
-#        #self.long_2_word = nn.Linear(hidden_dim, embedding_dim)
-#        
-#        
-#    def init_hidden(self):
-#        return(Variable(torch.rand(1,1,100)).cuda(), Variable(torch.randn((1,1,100))).cuda())
-#    def forward(self, imageVec):
-#        outLong, self.hidden = self.lstm(imageVec, self.hidden)
-#        #Outword = self.long_2_word(outLong, -1)
-#        return outLong
 
 print("[ ]  Creating LSTM...\r", end="")
 model = LSTMcaption(1000,100, 100)
@@ -100,50 +81,70 @@ print("[✔️]")
 
 
 
+####################################################################################################
+#   Define loss function:
+#       L1 loss: |x-t|
+#       tanh: (e^(2x) -1)/(e^(2x) +1)
+#       Adam optimizer
+#   totalLoss: keeps track of the total losss accumulated to find average
+#   iteration: how many times the net has guesses a word also for average
+#   epochs: take a wild guess buddy
+####################################################################################################
 
 loss_fun = nn.L1Loss() 
-optimizer = optim.SGD(model.parameters(), lr =0.0001)
+optimizer = optim.Adam(model.parameters(), lr =0.0001)
 tanh = nn.Hardtanh()
-
-
-inputVar = Variable(image_data[0])
-#print('CNN', CNNmodel(inputVar))
-
-
 
 totalLoss = 0
 iteration = 1
 epochs = 20
 
+####################################################################################################
+#   For the number of epochs:
+#       for each data point in the data set:
+#           create the output vector from the CNN
+#           
+#           set the gradient of all model parameters to zero
+#           zero the initial state of the LSTM
+#       
+#           for word in the sentence of the datapoint:
+#               heck is for counting which word we are at in the sentence
+#               
+#               target is meant to hold the vector representation of the word at position heck
+#               this is stored in target
+#               
+#               out is the output of the LSTM
+#                   this takes the CNN output and the current word as an input
+#               GUESS WHAT LOSS REPRESENTS
+#                   activate output of CNN with tanh
+#                   indexing to make both [100] tensors
+#
+#               The next few lines are for making the Print statement look nice
+#                   Loss: loss      avgLoss: Average Loss   image number: i 
+#                   word: guess     c: confidence in W2V    T: Target word
+#               
+#               Backprop loss
+#               optimizer step
+#       save per epoch
+####################################################################################################
 for j in range(epochs):
     for i in range(len(jsonStuff.Ximproved)):
         input_var = Variable(image_data[i].unsqueeze(0))
-    
-        #plt.imshow(toPIL(image_data[i]))
-        #plt.show()
-    
-
         CNN_out = CNNmodel(input_var)
         CNN_out = CNN_out.unsqueeze(0)
 
         model.zero_grad()
-
         model.hidden = model.init_hidden() 
     
         for word in Y[i]:
             heck = 0
-            temp= torch.from_numpy(word)
-            temp = temp.cuda()
-        
-            
-            #print(lstm.hidden) 
 
-            target=Variable(temp)
+            temp =  torch.from_numpy(word)
+            target=Variable(temp).cuda()
+
             out = model(CNN_out, temp)
-        
-        
-
             loss = loss_fun(tanh(out[0][0]), target)
+            
             lossp = loss.data[0]
             totalLoss += lossp
             wordp = jsonStuff.model.wv.most_similar(positive=[tanh(out[0][0]).data.cpu().numpy()])
@@ -154,6 +155,7 @@ for j in range(epochs):
                 loss.backward(retain_graph=True)
             else:
                 loss.backward()
+            
             heck += 1
             iteration +=1
             optimizer.step()
